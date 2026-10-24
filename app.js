@@ -903,7 +903,7 @@ async function analyzeCamera(question) {
         }
 
         const response = await fetch(
-            "http://127.0.0.1:5001/analyze",
+            "https://aura-universal-reality-assistant.onrender.com/analyze",
             {
                 method: "POST",
 
