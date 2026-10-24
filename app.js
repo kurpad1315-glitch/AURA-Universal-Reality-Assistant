@@ -645,7 +645,7 @@ window.addEventListener(
         */
 
         startAuraVoiceAssistant();
-
+startCamera();
     }
 );
 
