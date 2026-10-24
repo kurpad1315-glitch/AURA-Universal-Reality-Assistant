@@ -957,3 +957,185 @@ async function analyzeCamera(question) {
         );
     }
 }
+
+/* ==========================================
+   AURA QUICK ACTIONS + NAVIGATION
+========================================== */
+
+const seeButton = document.getElementById("seeButton");
+const goButton = document.getElementById("goButton");
+const seeScreen = document.getElementById("seeScreen");
+
+/* SEE BUTTON */
+if (seeButton) {
+    seeButton.addEventListener("click", async function () {
+
+        console.log("AURA: SEE selected.");
+
+        if (!cameraStream) {
+            await startCamera();
+        }
+
+        updateStatus(
+            "SEE MODE",
+            "AURA is ready to understand your surroundings."
+        );
+
+        speak(
+            "See mode activated. I am ready to describe your surroundings.",
+            true
+        );
+    });
+}
+
+
+/* GO BUTTON */
+if (goButton) {
+    goButton.addEventListener("click", function () {
+
+        console.log("AURA: GO selected.");
+
+        updateStatus(
+            "GO MODE",
+            "Tell me where you want to go."
+        );
+
+        speak(
+            "Go mode activated. Tell me where you want to go.",
+            true
+        );
+    });
+}
+
+
+/* SEE SCREEN ACTIONS */
+document.querySelectorAll(".vision-action").forEach(function(button) {
+
+    button.addEventListener("click", async function() {
+
+        const title =
+            this.querySelector("strong")?.textContent || "";
+
+        console.log("AURA VISION ACTION:", title);
+
+        if (!cameraStream) {
+            await startCamera();
+        }
+
+        if (title === "Describe") {
+
+            await analyzeCamera(
+                "Describe my surroundings clearly. Tell me about people, objects, obstacles, furniture and the general environment."
+            );
+
+        } else if (title === "Path Check") {
+
+            await analyzeCamera(
+                "Check whether the path in front of me is clear. Identify obstacles, people, stairs, doors or anything I should be careful about."
+            );
+
+        } else if (title === "Read") {
+
+            await analyzeCamera(
+                "Read any visible text, signs, boards, labels or notices in the camera view. If there is no readable text, say so."
+            );
+        }
+    });
+});
+
+
+/* BOTTOM NAVIGATION */
+const navItems = document.querySelectorAll(".nav-item");
+
+navItems.forEach(function(item) {
+
+    item.addEventListener("click", async function() {
+
+        navItems.forEach(function(nav) {
+            nav.classList.remove("active");
+        });
+
+        this.classList.add("active");
+
+        const label =
+            this.querySelector("small")?.textContent
+                ?.toLowerCase()
+                .trim();
+
+        console.log("AURA NAVIGATION:", label);
+
+
+        /* HOME */
+        if (label === "home") {
+
+            updateStatus(
+                "AURA Ready",
+                "Speak naturally. I'm listening."
+            );
+
+            speak(
+                "Home. I'm ready to assist you.",
+                true
+            );
+
+            return;
+        }
+
+
+        /* SEE */
+        if (label === "see") {
+
+            if (!cameraStream) {
+                await startCamera();
+            }
+
+            updateStatus(
+                "SEE MODE",
+                "AURA is ready to see your surroundings."
+            );
+
+            speak(
+                "See mode activated. Ask me what you want me to see.",
+                true
+            );
+
+            return;
+        }
+
+
+        /* GO */
+        if (label === "go") {
+
+            updateStatus(
+                "GO MODE",
+                "Tell me where you want to go."
+            );
+
+            speak(
+                "Go mode activated. Tell me where you want to go.",
+                true
+            );
+
+            return;
+        }
+
+
+        /* SETTINGS */
+        if (label === "settings") {
+
+            updateStatus(
+                "SETTINGS",
+                "AURA settings are ready."
+            );
+
+            speak(
+                "Settings. Voice-first accessibility is active.",
+                false
+            );
+
+            return;
+        }
+
+    });
+
+});
