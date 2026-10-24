@@ -1,981 +1,9 @@
 /* ==========================================
-   AURA VOICE ENGINE
-   Simple + reliable prototype
-========================================== */
-
-const voiceCore = document.getElementById("voiceCore");
-const voiceStatus = document.getElementById("voiceStatus");
-const voiceHint = document.getElementById("voiceHint");
-
-const languageSelect =
-    document.getElementById("languageSelect");
-
-let selectedLanguage = "en-IN";
-
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-let recognition = false;
-let listening = false;
-let speaking = false;
-let assistantActive = false;
-
-/* ==========================================
-   CHECK BROWSER SUPPORT
-========================================== */
-
-if (!SpeechRecognition) {
-
-    voiceStatus.textContent = "Voice unavailable";
-
-    voiceHint.textContent =
-        "Please use Google Chrome for the voice prototype.";
-
-} else {
-
-    recognition = new SpeechRecognition();
-
-    recognition.lang = selectedLanguage;
-
-    recognition.continuous = false;
-
-    recognition.interimResults = false;
-
-    recognition.maxAlternatives = 1;
-}
-
-
-/* ==========================================
-   UPDATE SCREEN
-========================================== */
-
-function updateStatus(title, message) {
-
-    if (voiceStatus) {
-        voiceStatus.textContent = title;
-    }
-
-    if (voiceHint) {
-        voiceHint.textContent = message;
-    }
-
-}
-
-
-/* ==========================================
-   AURA RELIABLE VOICE OUTPUT
-========================================== */
-
-let auraVoices = [];
-
-function loadAuraVoices() {
-
-    auraVoices = window.speechSynthesis.getVoices();
-
-    console.log(
-        "AURA: Available voices:",
-        auraVoices.length
-    );
-}
-
-loadAuraVoices();
-
-if ("onvoiceschanged" in window.speechSynthesis) {
-
-    window.speechSynthesis.onvoiceschanged =
-        loadAuraVoices;
-
-}
-
-
-function speak(text, listenAfter = false) {
-
-    if (!("speechSynthesis" in window)) {
-
-        console.error(
-            "AURA: Speech synthesis is not supported."
-        );
-
-        return;
-
-    }
-
-    console.log(
-        "AURA SPEAKING:",
-        text
-    );
-
-
-    /* Stop any previous speech */
-
-    window.speechSynthesis.cancel();
-
-
-    /* Make sure Chrome speech engine is awake */
-
-    window.speechSynthesis.resume();
-
-
-    const utterance =
-        new SpeechSynthesisUtterance(text);
-
-
-    /* Language */
-
-    utterance.lang = "en-IN";
-
-
-    /* Voice */
-
-    const voices =
-        window.speechSynthesis.getVoices();
-
-
-    const preferredVoice =
-        voices.find(voice =>
-            voice.lang === "en-IN"
-        ) ||
-        voices.find(voice =>
-            voice.lang.startsWith("en-IN")
-        ) ||
-        voices.find(voice =>
-            voice.lang.startsWith("en-US")
-        ) ||
-        voices.find(voice =>
-            voice.lang.startsWith("en-GB")
-        ) ||
-        voices.find(voice =>
-            voice.lang.startsWith("en")
-        );
-
-
-    if (preferredVoice) {
-
-        utterance.voice = preferredVoice;
-
-        console.log(
-            "AURA VOICE:",
-            preferredVoice.name,
-            preferredVoice.lang
-        );
-
-    }
-
-
-    /* Voice settings */
-
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
-
-    utterance.onstart = function () {
-
-        speaking = true;
-
-        console.log(
-            "AURA VOICE STARTED"
-        );
-
-        updateStatus(
-            "AURA speaking",
-            "Please listen."
-        );
-
-    };
-
-
-    utterance.onend = function () {
-
-    speaking = false;
-
-    console.log("AURA: Speech finished.");
-
-    updateStatus(
-        "Listening",
-        "AURA is listening. Speak naturally."
-    );
-
-    if (assistantActive) {
-
-        setTimeout(() => {
-
-            if (!speaking && !listening) {
-                startListening();
-            }
-
-        }, 400);
-    }
-};
-
-    utterance.onerror = function (event) {
-
-        speaking = false;
-
-        console.error(
-            "AURA VOICE ERROR:",
-            event.error
-        );
-
-    };
-
-
-    /*
-       Small delay prevents Chrome/macOS
-       speech engine from silently failing.
-    */
-
-    setTimeout(() => {
-
-        window.speechSynthesis.resume();
-
-        window.speechSynthesis.speak(
-            utterance
-        );
-
-    }, 150);
-
-}
-
-
-/* ==========================================
-   START LISTENING
-========================================== */
-
-function startListening() {
-
-    if (!recognition) {
-
-        updateStatus(
-            "Voice unavailable",
-            "Please use Google Chrome."
-        );
-
-        return;
-
-    }
-
-
-    if (listening || speaking) {
-        return;
-    }
-
-
-    try {
-
-        recognition.start();
-
-        listening = true;
-
-        updateStatus(
-            "Listening...",
-            "Speak naturally. I'm listening."
-        );
-
-        if (voiceCore) {
-            voiceCore.classList.add("listening");
-        }
-
-        console.log("AURA listening...");
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "Could not start microphone:",
-            error
-        );
-
-    }
-
-}
-
-
-/* ==========================================
-   SPEECH RECOGNITION STARTED
-========================================== */
-
-if (recognition) {
-
-    recognition.onstart = function () {
-
-        listening = true;
-
-        updateStatus(
-            "Listening...",
-            "Speak naturally. I'm listening."
-        );
-
-        if (voiceCore) {
-            voiceCore.classList.add("listening");
-        }
-
-        console.log("Microphone active");
-
-    };
-
-
-    /* ======================================
-       USER SPEECH RECEIVED
-    ====================================== */
-
-    recognition.onresult = function (event) {
-
-        const text =
-            event.results[0][0]
-                .transcript
-                .toLowerCase()
-                .trim();
-
-
-        console.log(
-            "YOU SAID:",
-            text
-        );
-
-
-        listening = false;
-
-
-        if (voiceCore) {
-            voiceCore.classList.remove("listening");
-        }
-
-
-        handleCommand(text);
-
-    };
-
-
-   recognition.onend = function () {
-
-    listening = false;
-
-    if (voiceCore) {
-        voiceCore.classList.remove("listening");
-    }
-
-    console.log("AURA: Recognition ended.");
-
-    /*
-       If AURA is active and not speaking,
-       automatically listen again.
-    */
-
-    if (assistantActive && !speaking) {
-
-        console.log("AURA: Returning to listening...");
-
-        setTimeout(() => {
-
-            if (assistantActive && !speaking && !listening) {
-                startListening();
-            }
-
-        }, 500);
-    }
-};
-
-    /* ======================================
-       RECOGNITION ERROR
-    ====================================== */
-
-    recognition.onerror = function (event) {
-
-    listening = false;
-
-    if (voiceCore) {
-        voiceCore.classList.remove("listening");
-    }
-
-    // "aborted" can happen normally when AURA
-    // switches between listening and speaking.
-    if (event.error === "aborted") {
-        console.log("AURA switched voice state.");
-        return;
-    }
-
-    console.log("VOICE ERROR:", event.error);
-
-    if (event.error === "not-allowed") {
-
-        updateStatus(
-            "Microphone blocked",
-            "Please allow microphone access in Chrome."
-        );
-
-    } else if (event.error === "no-speech") {
-
-        updateStatus(
-            "I didn't hear you",
-            "I'm ready when you are."
-        );
-
-    } else {
-
-        updateStatus(
-            "Voice problem",
-            "Please try again."
-        );
-
-    }
-
-};
-}
-
-
-async function handleCommand(command) {
-
-    console.log("AURA NATURAL QUESTION:", command);
-    /* ---------- OPEN CAMERA ---------- */
-
-if (
-    command.includes("open camera") ||
-    command.includes("start camera") ||
-    command.includes("turn on camera") ||
-    command === "camera"
-) {
-
-    if (!cameraStream) {
-
-        await startCamera();
-
-    }
-
-    speak(
-        "Camera is ready. What would you like me to look for?",
-        true
-    );
-
-    return;
-}
-
-    const text = command.toLowerCase().trim();
-
-    /* -----------------------------
-       BASIC GREETINGS
-    ----------------------------- */
-
-    if (
-        text === "hi" ||
-        text === "hello" ||
-        text === "hey" ||
-        text === "hi aura" ||
-        text === "hello aura"
-    ) {
-
-        speak(
-            "Hello. I'm AURA. I'm ready to understand your surroundings.",
-            true
-        );
-
-        return;
-    }
-
-
-    /* -----------------------------
-       STOP COMMAND
-    ----------------------------- */
-
-    if (
-        text === "stop" ||
-        text === "stop listening" ||
-        text === "goodbye"
-    ) {
-
-        speak(
-            "Okay. I'll stop listening.",
-            false
-        );
-
-        return;
-    }
-
-
-    /* -----------------------------
-       EVERYTHING ELSE → VISION AI
-    ----------------------------- */
-
-    await analyzeCamera(command);
-}
-
-
-
-
-/* ==========================================
-   AURA AUTOMATIC VOICE ASSISTANT
-========================================== */
-
-let auraVoiceActive = false;
-let auraMicrophoneReady = false;
-
-
-/* ------------------------------------------
-   START AURA VOICE ASSISTANT
------------------------------------------- */
-
-async function startAuraVoiceAssistant() {
-
-    console.log("AURA: Starting voice assistant...");
-
-    if (!recognition) {
-
-        console.error(
-            "AURA: Speech Recognition is not supported."
-        );
-
-        updateStatus(
-            "Voice unavailable",
-            "Please use Google Chrome."
-        );
-
-        return;
-    }
-
-
-    try {
-
-        /* Request microphone permission */
-
-        const audioStream =
-            await navigator.mediaDevices.getUserMedia({
-                audio: true
-            });
-
-
-        /* Permission is now granted */
-
-        auraMicrophoneReady = true;
-
-        console.log(
-            "AURA: Microphone permission granted."
-        );
-
-
-        /*
-           We don't need to keep this
-           separate microphone stream.
-           SpeechRecognition will use
-           the microphone.
-        */
-
-        audioStream
-            .getTracks()
-            .forEach(track => track.stop());
-
-
-        auraVoiceActive = true;
-        assistantActive = true;
-
-console.log(
-    "AURA: Continuous voice assistant activated."
-);
-
-
-        updateStatus(
-            "Listening",
-            "AURA is listening. Speak naturally."
-        );
-
-
-        /*
-           Small delay gives the browser
-           time to release the permission
-           stream before SpeechRecognition
-           starts.
-        */
-
-        setTimeout(() => {
-
-            startListening();
-
-        }, 500);
-
-
-    } catch (error) {
-
-        console.error(
-            "AURA MICROPHONE ERROR:",
-            error
-        );
-
-
-        auraVoiceActive = false;
-
-
-        updateStatus(
-            "Microphone needed",
-            "Please allow microphone access for AURA."
-        );
-
-    }
-
-}
-
-
-/* ------------------------------------------
-   KEEP AURA LISTENING
------------------------------------------- */
-
-if (recognition) {
-
-    recognition.continuous = false;
-
-}
-
-
-/* ------------------------------------------
-   AUTOMATIC START
------------------------------------------- */
-
-window.addEventListener(
-    "load",
-    function () {
-
-        console.log(
-            "AURA: Website loaded."
-        );
-
-
-        /*
-           Start voice automatically
-           when AURA opens.
-        */
-
-        startAuraVoiceAssistant();
-startCamera();
-    }
-);
-
-/* ==========================================
-   INITIAL SCREEN
-========================================== */
-
-updateStatus(
-    "Hands-free mode",
-    "Activate AURA once to begin."
-);
-/* ==========================================
-   AURA LIVE CAMERA
-========================================== */
-
-const cameraFeed = document.getElementById("cameraFeed");
-const cameraStatus = document.getElementById("cameraStatus");
-
-let cameraStream = null;
-let cameraIsOpen = false;
-let imageCaptured = false;
-
-async function startCamera() {
-
-    if (!cameraFeed) {
-        console.log("Camera element not found.");
-        return;
-    }
-
-    try {
-
-        cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: {
-                    ideal: "environment"
-                }
-            },
-            audio: false
-        });
-
-        cameraFeed.srcObject = cameraStream;
-        await cameraFeed.play();
-
-        if (cameraStatus) {
-            cameraStatus.textContent = "LIVE CAMERA";
-        }
-
-        console.log("AURA camera active.");
-        cameraIsOpen = true;
-imageCaptured = false;
-
-    } catch (error) {
-
-        console.error("Camera access error:", error);
-
-        if (cameraStatus) {
-            cameraStatus.textContent = "CAMERA ACCESS NEEDED";
-        }
-
-    }
-}
-
-/* ==========================================
-   AURA CAMERA AI ANALYSIS
-========================================== */
-
-function captureCameraFrame() {
-
-    if (!cameraFeed) {
-        console.log("Camera feed not found.");
-        return null;
-    }
-
-    if (!cameraFeed.videoWidth || !cameraFeed.videoHeight) {
-        console.log("Camera is not ready yet.");
-        return null;
-    }
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = cameraFeed.videoWidth;
-    canvas.height = cameraFeed.videoHeight;
-
-    const context = canvas.getContext("2d");
-
-    context.drawImage(
-        cameraFeed,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    return canvas.toDataURL("image/jpeg", 0.8);
-}
-
-
-
-async function analyzeWithAura(question) {
-
-    console.log("AURA QUESTION:", question);
-
-    const image = captureCameraFrame();
-
-    if (!image) {
-
-        speak(
-            "I cannot see the camera image yet. Please wait a moment and try again.",
-            true
-        );
-
-        return;
-    }
-
-    updateStatus(
-        "Analyzing...",
-        "AURA is looking at your surroundings."
-    );
-
-    try {
-
-        const response = await fetch("/analyze", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                question: question,
-                image: image
-            })
-
-        });
-
-        const data = await response.json();
-
-        console.log("AURA VISION RESPONSE:", data);
-
-        if (data.error) {
-
-            console.error("AURA AI ERROR:", data.error);
-
-            speak(
-                "Sorry, I could not analyze the scene right now.",
-                true
-            );
-
-            return;
-        }
-
-        const answer = data.answer;
-
-        updateStatus(
-            "AURA answered",
-            "Ask me another question."
-        );
-
-        speak(answer, true);
-
-    } catch (error) {
-
-        console.error("VISION REQUEST ERROR:", error);
-
-        speak(
-            "I am having trouble connecting to my vision system.",
-            true
-        );
-    }
-}
-/* ==========================================
-   AURA LANGUAGE CONTROL
-========================================== */
-
-if (languageSelect) {
-
-    languageSelect.addEventListener(
-        "change",
-        function () {
-
-            selectedLanguage = this.value;
-
-            if (recognition) {
-                recognition.lang = selectedLanguage;
-            }
-
-            const languageName =
-                this.options[this.selectedIndex].text;
-
-            console.log(
-                "AURA LANGUAGE:",
-                languageName
-            );
-
-            speak(
-                "Language changed to " +
-                languageName
-            );
-
-        }
-    );
-
-}
-/* ==========================================
-   AURA VISION CAPTURE
-========================================== */
-
-async function captureCameraFrame() {
-
-    if (!cameraFeed) {
-        console.log("Camera feed not found.");
-        return null;
-    }
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = cameraFeed.videoWidth;
-    canvas.height = cameraFeed.videoHeight;
-
-    const context = canvas.getContext("2d");
-
-    context.drawImage(
-        cameraFeed,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    const imageData = canvas.toDataURL(
-        "image/jpeg",
-        0.8
-    );
-
-    console.log("AURA captured camera frame.");
-
-    return imageData;
-}
-
-let visionBackendUnavailable = false;
-
- async function analyzeCamera(question) {
-
-    updateStatus(
-        "Analyzing",
-        "AURA is looking at your surroundings."
-    );
-
-    try {
-
-        const image = await captureCameraFrame();
-
-        if (!image) {
-            speak("I cannot access the camera right now.");
-            return;
-        }
-
-        // If the API quota is already exhausted,
-        // use the local demo mode instead of repeatedly failing.
-        if (visionBackendUnavailable) {
-            demoVisionResponse(question);
-            return;
-        }
-
-        const response = await fetch(
-            "https://aura-universal-reality-assistant.onrender.com/analyze",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    question: question,
-                    image: image
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        console.log("AURA VISION RESPONSE:", data);
-
-        if (response.ok && data.answer) {
-
-            speak(data.answer, true);
-            return;
-        }
-
-        // OpenAI quota / rate-limit fallback
-        if (
-            response.status === 429 ||
-            JSON.stringify(data).includes("rate_limit")
-        ) {
-
-            console.warn(
-                "AURA: OpenAI quota reached. Switching to demo mode."
-            );
-
-            visionBackendUnavailable = true;
-
-            demoVisionResponse(question);
-            return;
-        }
-
-        // Any other backend error
-        console.error("AURA VISION ERROR:", data);
-
-        demoVisionResponse(question);
-
-    } catch (error) {
-
-        console.error(
-            "AURA VISION CONNECTION ERROR:",
-            error
-        );
-
-        demoVisionResponse(question);
-    }
-}
-
-
-/* ==========================================
    AURA OFFLINE DEMO VISION
-   ========================================== */
+========================================== */
 
 function demoVisionResponse(question) {
-
     const q = question.toLowerCase();
-
     let answer = "";
 
     if (
@@ -984,41 +12,37 @@ function demoVisionResponse(question) {
         q.includes("describe") ||
         q.includes("surrounding")
     ) {
-
         answer =
             "I can see the camera view. " +
-            "The surroundings appear to contain people and indoor seating. " +
-            "Please move the camera slowly around you for a clearer view.";
+            "The surroundings may contain objects or furniture. " +
+            "Please move the camera slowly for a clearer view.";
 
     } else if (
         q.includes("person") ||
         q.includes("people") ||
         q.includes("someone")
     ) {
-
         answer =
-            "There appear to be people within the camera view. " +
-            "Please move the camera toward the person or area you want me to examine.";
+            "Please point the camera toward the person " +
+            "you want me to examine.";
 
     } else if (
         q.includes("chair") ||
         q.includes("seat")
     ) {
-
         answer =
-            "The camera view appears to contain seating. " +
-            "Please point the camera directly toward the area you want checked.";
+            "Please point the camera toward the seating " +
+            "area you want me to examine.";
 
     } else if (
         q.includes("path") ||
         q.includes("clear") ||
         q.includes("obstacle")
     ) {
-
         answer =
-            "I can help check your path. " +
-            "Move the camera slowly toward the direction you want to travel " +
-            "so AURA can examine the area.";
+            "I can help examine your surroundings, " +
+            "but I cannot guarantee that a path is safe. " +
+            "Continue using your established mobility aids.";
 
     } else if (
         q.includes("read") ||
@@ -1026,81 +50,32 @@ function demoVisionResponse(question) {
         q.includes("sign") ||
         q.includes("board")
     ) {
-
         answer =
-            "Please point the camera directly at the sign or text. " +
-            "Keep the camera steady and move closer if the text is small.";
+            "Please point the camera directly at the text " +
+            "and keep the camera steady.";
 
     } else if (
         q.includes("color") ||
         q.includes("colour")
     ) {
-
         answer =
-            "Please point the camera directly at the object whose color you want to identify.";
+            "Please point the camera toward the object " +
+            "whose color you want to identify.";
 
     } else {
-
         answer =
-            "I have captured the camera view. " +
-            "Please tell me specifically what you want me to look for, " +
-            "such as people, objects, signs, colors, or obstacles.";
+            "Tell me what you want me to examine, " +
+            "such as objects, people, signs, or text.";
     }
 
     updateStatus(
         "SEE MODE",
-        "Camera captured. AURA is assisting."
+        "AURA is ready to assist."
     );
 
     speak(answer, true);
 }
 
-                body: JSON.stringify({
-                    question: question,
-                    image: image
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        console.log(
-            "AURA VISION RESPONSE:",
-            data
-        );
-
-        if (data.answer) {
-
-            speak(
-                data.answer,
-                true
-            );
-
-        } else if (data.error) {
-
-            console.error(
-                "VISION ERROR:",
-                data.error
-            );
-
-            speak(
-                "Sorry. I couldn't understand the camera view."
-            );
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            "AURA VISION CONNECTION ERROR:",
-            error
-        );
-
-        speak(
-            "I'm having trouble connecting to my vision system."
-        );
-    }
-}
 
 /* ==========================================
    AURA QUICK ACTIONS + NAVIGATION
@@ -1110,28 +85,7 @@ const seeButton = document.getElementById("seeButton");
 const goButton = document.getElementById("goButton");
 const seeScreen = document.getElementById("seeScreen");
 
-/* SEE BUTTON */
-if (seeButton) {
-    seeButton.addEventListener("click", async function () {
-
-        console.log("AURA: SEE selected.");
-
-        if (!cameraStream) {
-            await startCamera();
-        }
-
-        updateStatus(
-            "SEE MODE",
-            "AURA is ready to understand your surroundings."
-        );
-
-        speak(
-            "See mode activated. I am ready to describe your surroundings.",
-            true
-        );
-    });
-}
-
+/* SEE button is connected in index.html. */
 
 /* GO BUTTON */
 if (goButton) {
@@ -1162,26 +116,33 @@ document.querySelectorAll(".vision-action").forEach(function(button) {
 
         console.log("AURA VISION ACTION:", title);
 
-        if (!cameraStream) {
-            await startCamera();
+        if (!cameraStream || !cameraIsOpen) {
+            const started = await startCamera();
+
+            if (!started) {
+                return;
+            }
         }
 
         if (title === "Describe") {
 
             await analyzeCamera(
-                "Describe my surroundings clearly. Tell me about people, objects, obstacles, furniture and the general environment."
+                "Describe the visible surroundings, objects, " +
+                "people, furniture, and environmental details."
             );
 
         } else if (title === "Path Check") {
 
             await analyzeCamera(
-                "Check whether the path in front of me is clear. Identify obstacles, people, stairs, doors or anything I should be careful about."
+                "Describe visible obstacles and features in the " +
+                "path. Do not assume that the path is safe."
             );
 
         } else if (title === "Read") {
 
             await analyzeCamera(
-                "Read any visible text, signs, boards, labels or notices in the camera view. If there is no readable text, say so."
+                "Read visible text, signs, labels, or notices " +
+                "in the camera image."
             );
         }
     });
@@ -1208,8 +169,6 @@ navItems.forEach(function(item) {
 
         console.log("AURA NAVIGATION:", label);
 
-
-        /* HOME */
         if (label === "home") {
 
             updateStatus(
@@ -1225,17 +184,17 @@ navItems.forEach(function(item) {
             return;
         }
 
-
-        /* SEE */
         if (label === "see") {
 
-            if (!cameraStream) {
-                await startCamera();
+            const started = await startCamera();
+
+            if (!started) {
+                return;
             }
 
             updateStatus(
                 "SEE MODE",
-                "AURA is ready to see your surroundings."
+                "AURA is ready to examine your surroundings."
             );
 
             speak(
@@ -1246,8 +205,6 @@ navItems.forEach(function(item) {
             return;
         }
 
-
-        /* GO */
         if (label === "go") {
 
             updateStatus(
@@ -1263,8 +220,6 @@ navItems.forEach(function(item) {
             return;
         }
 
-
-        /* SETTINGS */
         if (label === "settings") {
 
             updateStatus(
@@ -1276,10 +231,6 @@ navItems.forEach(function(item) {
                 "Settings. Voice-first accessibility is active.",
                 false
             );
-
-            return;
         }
-
     });
-
 });
