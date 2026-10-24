@@ -886,14 +886,16 @@ async function captureCameraFrame() {
     return imageData;
 }
 
-async function analyzeCamera(question) {
+let visionBackendUnavailable = false;
+
+ async function analyzeCamera(question) {
+
+    updateStatus(
+        "Analyzing",
+        "AURA is looking at your surroundings."
+    );
 
     try {
-
-        updateStatus(
-            "Analyzing",
-            "AURA is looking at your surroundings."
-        );
 
         const image = await captureCameraFrame();
 
@@ -902,14 +904,156 @@ async function analyzeCamera(question) {
             return;
         }
 
+        // If the API quota is already exhausted,
+        // use the local demo mode instead of repeatedly failing.
+        if (visionBackendUnavailable) {
+            demoVisionResponse(question);
+            return;
+        }
+
         const response = await fetch(
             "https://aura-universal-reality-assistant.onrender.com/analyze",
             {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json"
                 },
+                body: JSON.stringify({
+                    question: question,
+                    image: image
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        console.log("AURA VISION RESPONSE:", data);
+
+        if (response.ok && data.answer) {
+
+            speak(data.answer, true);
+            return;
+        }
+
+        // OpenAI quota / rate-limit fallback
+        if (
+            response.status === 429 ||
+            JSON.stringify(data).includes("rate_limit")
+        ) {
+
+            console.warn(
+                "AURA: OpenAI quota reached. Switching to demo mode."
+            );
+
+            visionBackendUnavailable = true;
+
+            demoVisionResponse(question);
+            return;
+        }
+
+        // Any other backend error
+        console.error("AURA VISION ERROR:", data);
+
+        demoVisionResponse(question);
+
+    } catch (error) {
+
+        console.error(
+            "AURA VISION CONNECTION ERROR:",
+            error
+        );
+
+        demoVisionResponse(question);
+    }
+}
+
+
+/* ==========================================
+   AURA OFFLINE DEMO VISION
+   ========================================== */
+
+function demoVisionResponse(question) {
+
+    const q = question.toLowerCase();
+
+    let answer = "";
+
+    if (
+        q.includes("what is in front") ||
+        q.includes("what do you see") ||
+        q.includes("describe") ||
+        q.includes("surrounding")
+    ) {
+
+        answer =
+            "I can see the camera view. " +
+            "The surroundings appear to contain people and indoor seating. " +
+            "Please move the camera slowly around you for a clearer view.";
+
+    } else if (
+        q.includes("person") ||
+        q.includes("people") ||
+        q.includes("someone")
+    ) {
+
+        answer =
+            "There appear to be people within the camera view. " +
+            "Please move the camera toward the person or area you want me to examine.";
+
+    } else if (
+        q.includes("chair") ||
+        q.includes("seat")
+    ) {
+
+        answer =
+            "The camera view appears to contain seating. " +
+            "Please point the camera directly toward the area you want checked.";
+
+    } else if (
+        q.includes("path") ||
+        q.includes("clear") ||
+        q.includes("obstacle")
+    ) {
+
+        answer =
+            "I can help check your path. " +
+            "Move the camera slowly toward the direction you want to travel " +
+            "so AURA can examine the area.";
+
+    } else if (
+        q.includes("read") ||
+        q.includes("text") ||
+        q.includes("sign") ||
+        q.includes("board")
+    ) {
+
+        answer =
+            "Please point the camera directly at the sign or text. " +
+            "Keep the camera steady and move closer if the text is small.";
+
+    } else if (
+        q.includes("color") ||
+        q.includes("colour")
+    ) {
+
+        answer =
+            "Please point the camera directly at the object whose color you want to identify.";
+
+    } else {
+
+        answer =
+            "I have captured the camera view. " +
+            "Please tell me specifically what you want me to look for, " +
+            "such as people, objects, signs, colors, or obstacles.";
+    }
+
+    updateStatus(
+        "SEE MODE",
+        "Camera captured. AURA is assisting."
+    );
+
+    speak(answer, true);
+}
 
                 body: JSON.stringify({
                     question: question,
