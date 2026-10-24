@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#05070d">
 
-    <title>AURA — AI Accessibility Assistant</title>
+    <meta name="description"
+        content="AURA is an AI-powered environmental awareness assistant designed to make visual information more accessible.">
+
+    <title>AURA — Universal Reality Assistant</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -17,7 +18,7 @@
 
     <main class="app">
 
-        <!-- TOP BAR -->
+        <!-- HEADER -->
         <header class="top-bar">
 
             <div class="brand">
@@ -48,230 +49,467 @@
             </h2>
 
 
-            <!-- VOICE CORE -->
-           <!-- AURA LIVE CAMERA -->
-<div class="camera-core">
+            <!-- LIVE CAMERA -->
+            <div class="camera-core">
 
-    <video
-        id="cameraFeed"
-        autoplay
-        playsinline
-        muted>
-    </video>
+                <video
+                    id="cameraFeed"
+                    autoplay
+                    playsinline
+                    muted
+                    aria-label="Live camera preview">
+                </video>
 
-    <div class="camera-overlay">
-        <span class="camera-status-dot"></span>
-        <span id="cameraStatus">CAMERA READY</span>
-    </div>
+                <div class="camera-overlay">
+                    <span class="camera-status-dot"></span>
+                    <span id="cameraStatus" role="status">
+                        CAMERA READY
+                    </span>
+                </div>
 
-    <div class="camera-scan-line"></div>
+                <div class="camera-scan-line"></div>
 
-</div>
-<!-- AURA LANGUAGE -->
-<section class="language-section">
-
-    <div class="language-label">
-        <span>🌐</span>
-        <span>ASSISTANCE LANGUAGE</span>
-    </div>
-
-    <select id="languageSelect" class="language-select">
-
-        <option value="en-IN">
-            English
-        </option>
-
-        <option value="kn-IN">
-            ಕನ್ನಡ — Kannada
-        </option>
-
-        <option value="te-IN">
-            తెలుగు — Telugu
-        </option>
-
-        <option value="hi-IN">
-            हिन्दी — Hindi
-        </option>
-
-        <option value="ta-IN">
-            தமிழ் — Tamil
-        </option>
-
-    </select>
-
-</section>
+            </div>
 
 
-            <p class="voice-status" id="voiceStatus">
-    Hands-free mode
-</p>
+            <!-- CAMERA CONTROLS -->
+            <div class="camera-controls">
 
-<p class="voice-hint" id="voiceHint">
-    Say “AURA” followed by what you need
-</p>
+                <button
+                    type="button"
+                    id="seeButton"
+                    class="action-card">
+
+                    <span class="action-icon">◉</span>
+
+                    <span>
+                        <strong>SEE</strong>
+                        <small>Open camera and understand surroundings</small>
+                    </span>
+
+                </button>
+
+                <button
+                    type="button"
+                    id="stopCameraButton"
+                    class="action-card">
+
+                    <span class="action-icon">■</span>
+
+                    <span>
+                        <strong>STOP CAMERA</strong>
+                        <small>Turn off camera access</small>
+                    </span>
+
+                </button>
+
+            </div>
 
 
-        <!-- QUICK ACTIONS -->
-        <section class="quick-actions">
+            <!-- LANGUAGE SELECTION -->
+            <section class="language-section">
 
-            <button class="action-card" id="seeButton">
+                <div class="language-label">
+                    <span>🌐</span>
+                    <span>ASSISTANCE LANGUAGE</span>
+                </div>
 
-                <span class="action-icon">◉</span>
+                <select
+                    id="languageSelect"
+                    class="language-select"
+                    aria-label="Select assistance language">
 
-                <span>
-                    <strong>SEE</strong>
-                    <small>Understand surroundings</small>
-                </span>
+                    <option value="en-IN">English</option>
+                    <option value="kn-IN">ಕನ್ನಡ — Kannada</option>
+                    <option value="te-IN">తెలుగు — Telugu</option>
+                    <option value="hi-IN">हिन्दी — Hindi</option>
+                    <option value="ta-IN">தமிழ் — Tamil</option>
 
-            </button>
+                </select>
+
+            </section>
 
 
-            <button class="action-card" id="goButton">
+            <!-- VOICE STATUS -->
+            <p class="voice-status" id="voiceStatus" role="status">
+                Hands-free mode
+            </p>
 
-                <span class="action-icon">⌖</span>
+            <p class="voice-hint" id="voiceHint">
+                Say "AURA" followed by what you need
+            </p>
 
-                <span>
-                    <strong>GO</strong>
-                    <small>Navigate somewhere</small>
-                </span>
 
-            </button>
+            <!-- QUICK ACTIONS -->
+            <section class="quick-actions">
+
+                <button type="button" class="action-card" id="goButton">
+
+                    <span class="action-icon">⌖</span>
+
+                    <span>
+                        <strong>GO</strong>
+                        <small>Navigation assistance</small>
+                    </span>
+
+                </button>
+
+            </section>
+
+
+            <!-- ASSISTANCE MESSAGE -->
+            <section class="assistant-tip">
+
+                <div class="tip-icon">✦</div>
+
+                <div>
+                    <strong>Voice-first assistance</strong>
+
+                    <p>
+                        Use voice commands or the camera control
+                        to explore your surroundings.
+                    </p>
+                </div>
+
+            </section>
+
+
+            <!-- BOTTOM NAVIGATION -->
+            <nav class="bottom-nav" aria-label="Main navigation">
+
+                <button type="button" class="nav-item active">
+                    <span>⌂</span>
+                    <small>Home</small>
+                </button>
+
+                <button type="button" class="nav-item" id="seeNavButton">
+                    <span>◉</span>
+                    <small>See</small>
+                </button>
+
+                <button type="button" class="nav-item" id="goNavButton">
+                    <span>⌖</span>
+                    <small>Go</small>
+                </button>
+
+                <button type="button" class="nav-item" id="settingsNavButton">
+                    <span>⚙</span>
+                    <small>Settings</small>
+                </button>
+
+            </nav>
 
         </section>
 
 
-        <!-- ASSISTANCE MESSAGE -->
-        <section class="assistant-tip">
+        <!-- SEE MODE -->
+        <section class="see-screen" id="seeScreen">
 
-            <div class="tip-icon">✦</div>
+            <div class="see-header">
 
-            <div>
-                <strong>Voice-first assistance</strong>
+                <div>
+                    <span class="mode-label">AURA VISION</span>
+                    <h2>See Mode</h2>
+                </div>
 
-                <p>
-                    You don't need to navigate menus.
-                    Just speak naturally.
-                </p>
+                <div class="vision-status">
+                    <span class="status-dot"></span>
+                    <span>VISION READY</span>
+                </div>
+
+            </div>
+
+
+            <!-- VISION PANEL -->
+            <div class="vision-panel">
+
+                <div class="camera-placeholder" id="cameraPlaceholder">
+
+                    <div class="camera-icon">◉</div>
+
+                    <h3>Vision Area</h3>
+
+                    <p>
+                        Start the camera to view your surroundings.
+                    </p>
+
+                    <button type="button" id="startVisionButton">
+                        Start Camera
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- VISION MESSAGE -->
+            <div class="vision-message">
+
+                <div class="voice-symbol">✦</div>
+
+                <div>
+                    <strong>AURA Assistance</strong>
+
+                    <p id="visionMessage">
+                        Start the camera to begin environmental awareness.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- VISION ACTIONS -->
+            <div class="vision-actions">
+
+                <button type="button"
+                    class="vision-action"
+                    id="describeButton">
+
+                    <span>◉</span>
+                    <strong>Describe</strong>
+                    <small>What's around me?</small>
+
+                </button>
+
+
+                <button type="button"
+                    class="vision-action"
+                    id="pathCheckButton">
+
+                    <span>⌁</span>
+                    <strong>Path Check</strong>
+                    <small>Explore surroundings</small>
+
+                </button>
+
+
+                <button type="button"
+                    class="vision-action"
+                    id="readTextButton">
+
+                    <span>▤</span>
+                    <strong>Read</strong>
+                    <small>Read visible text</small>
+
+                </button>
+
             </div>
 
         </section>
-
-
-        <!-- BOTTOM NAVIGATION -->
-        <nav class="bottom-nav" aria-label="Main navigation">
-
-            <button class="nav-item active">
-
-                <span>⌂</span>
-                <small>Home</small>
-
-            </button>
-
-
-            <button class="nav-item">
-
-                <span>◉</span>
-                <small>See</small>
-
-            </button>
-
-
-            <button class="nav-item">
-
-                <span>⌖</span>
-                <small>Go</small>
-
-            </button>
-
-
-            <button class="nav-item">
-
-                <span>⚙</span>
-                <small>Settings</small>
-
-            </button>
-
-        </nav>
-        <!-- AURA SEE MODE -->
-<section class="see-screen" id="seeScreen">
-
-    <div class="see-header">
-        <div>
-            <span class="mode-label">AURA VISION</span>
-            <h2>See Mode</h2>
-        </div>
-
-        <div class="vision-status">
-            <span class="status-dot"></span>
-            VISION READY
-        </div>
-    </div>
-
-
-    <div class="vision-panel">
-
-        <div class="camera-placeholder">
-
-            <div class="camera-icon">
-                ◉
-            </div>
-
-            <h3>Vision Area</h3>
-
-            <p>
-                AURA will understand your surroundings here.
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <div class="vision-message">
-
-        <div class="voice-symbol">
-            ✦
-        </div>
-
-        <div>
-            <strong>AURA is listening</strong>
-
-            <p>
-                Say "describe my surroundings"
-            </p>
-        </div>
-
-    </div>
-
-
-    <div class="vision-actions">
-
-        <button class="vision-action">
-            <span>◉</span>
-            <strong>Describe</strong>
-            <small>What's around me?</small>
-        </button>
-
-        <button class="vision-action">
-            <span>⌁</span>
-            <strong>Path Check</strong>
-            <small>Is my path clear?</small>
-        </button>
-
-        <button class="vision-action">
-            <span>▤</span>
-            <strong>Read</strong>
-            <small>Read text around me</small>
-        </button>
-
-    </div>
-
-</section>
 
     </main>
 
 
+    <!-- EXISTING APPLICATION JAVASCRIPT -->
     <script src="app.js"></script>
+
+
+    <!-- CAMERA BUTTON CONNECTION -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const seeButton = document.getElementById("seeButton");
+            const startVisionButton =
+                document.getElementById("startVisionButton");
+
+            const stopCameraButton =
+                document.getElementById("stopCameraButton");
+
+            const seeNavButton =
+                document.getElementById("seeNavButton");
+
+            const cameraFeed =
+                document.getElementById("cameraFeed");
+
+            const cameraStatus =
+                document.getElementById("cameraStatus");
+
+            const visionMessage =
+                document.getElementById("visionMessage");
+
+            let cameraRequestInProgress = false;
+
+
+            /*
+             * START CAMERA
+             *
+             * Uses the existing startCamera() function in app.js.
+             * The browser will request permission when necessary.
+             */
+            async function openAuraCamera() {
+
+                if (cameraRequestInProgress) {
+                    return;
+                }
+
+                cameraRequestInProgress = true;
+
+                if (cameraStatus) {
+                    cameraStatus.textContent = "STARTING CAMERA...";
+                }
+
+                if (visionMessage) {
+                    visionMessage.textContent =
+                        "Requesting camera access...";
+                }
+
+                try {
+
+                    if (typeof startCamera !== "function") {
+
+                        throw new Error(
+                            "startCamera() was not found in app.js. " +
+                            "Check that app.js loads successfully."
+                        );
+
+                    }
+
+                    await startCamera();
+
+                    if (
+                        cameraFeed &&
+                        cameraFeed.srcObject &&
+                        cameraFeed.srcObject.getVideoTracks().some(
+                            track => track.readyState === "live"
+                        )
+                    ) {
+
+                        if (cameraStatus) {
+                            cameraStatus.textContent = "LIVE CAMERA";
+                        }
+
+                        if (visionMessage) {
+                            visionMessage.textContent =
+                                "Camera is active. AURA is ready to assist.";
+                        }
+
+                        if (cameraFeed.scrollIntoView) {
+                            cameraFeed.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center"
+                            });
+                        }
+
+                    } else {
+
+                        if (cameraStatus) {
+                            cameraStatus.textContent = "CAMERA NOT STARTED";
+                        }
+
+                        if (visionMessage) {
+                            visionMessage.textContent =
+                                "Camera did not start. Check permissions and browser console.";
+                        }
+
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "AURA camera startup error:",
+                        error
+                    );
+
+                    if (cameraStatus) {
+                        cameraStatus.textContent = "CAMERA ERROR";
+                    }
+
+                    if (visionMessage) {
+                        visionMessage.textContent =
+                            "Unable to start the camera. Allow camera access and try again.";
+                    }
+
+                } finally {
+
+                    cameraRequestInProgress = false;
+
+                }
+
+            }
+
+
+            /*
+             * STOP CAMERA
+             */
+            function closeAuraCamera() {
+
+                /*
+                 * Prefer the existing stopCamera() function
+                 * if app.js provides one.
+                 */
+                if (typeof stopCamera === "function") {
+
+                    stopCamera();
+
+                } else if (cameraFeed && cameraFeed.srcObject) {
+
+                    cameraFeed.srcObject
+                        .getTracks()
+                        .forEach(track => track.stop());
+
+                    cameraFeed.srcObject = null;
+
+                }
+
+                if (cameraStatus) {
+                    cameraStatus.textContent = "CAMERA STOPPED";
+                }
+
+                if (visionMessage) {
+                    visionMessage.textContent =
+                        "Camera stopped. Start it again whenever you need assistance.";
+                }
+
+            }
+
+
+            /*
+             * CONNECT CAMERA BUTTONS
+             */
+            if (seeButton) {
+                seeButton.addEventListener("click", openAuraCamera);
+            }
+
+            if (startVisionButton) {
+                startVisionButton.addEventListener(
+                    "click",
+                    openAuraCamera
+                );
+            }
+
+            if (stopCameraButton) {
+                stopCameraButton.addEventListener(
+                    "click",
+                    closeAuraCamera
+                );
+            }
+
+
+            /*
+             * OPEN CAMERA FROM BOTTOM NAVIGATION
+             */
+            if (seeNavButton) {
+
+                seeNavButton.addEventListener("click", function () {
+
+                    const seeScreen =
+                        document.getElementById("seeScreen");
+
+                    if (seeScreen) {
+                        seeScreen.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                    }
+
+                    openAuraCamera();
+
+                });
+
+            }
+
+        });
+    </script>
 
 </body>
 </html>
