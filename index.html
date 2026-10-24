@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#05070d">
+
+    <title>AURA — AI Accessibility Assistant</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="app">
+
+        <!-- TOP BAR -->
+        <header class="top-bar">
+
+            <div class="brand">
+                <div class="brand-mark">A</div>
+
+                <div>
+                    <h1>AURA</h1>
+                    <span>Universal Reality Assistant</span>
+                </div>
+            </div>
+
+            <button class="status-button" aria-label="System status">
+                <span class="status-dot"></span>
+                READY
+            </button>
+
+        </header>
+
+
+        <!-- MAIN EXPERIENCE -->
+        <section class="hero">
+
+            <p class="greeting">WELCOME BACK</p>
+
+            <h2>
+                I'm here.<br>
+                <span>Tell me what you need.</span>
+            </h2>
+
+
+            <!-- VOICE CORE -->
+           <!-- AURA LIVE CAMERA -->
+<div class="camera-core">
+
+    <video
+        id="cameraFeed"
+        autoplay
+        playsinline
+        muted>
+    </video>
+
+    <div class="camera-overlay">
+        <span class="camera-status-dot"></span>
+        <span id="cameraStatus">CAMERA READY</span>
+    </div>
+
+    <div class="camera-scan-line"></div>
+
+</div>
+<!-- AURA LANGUAGE -->
+<section class="language-section">
+
+    <div class="language-label">
+        <span>🌐</span>
+        <span>ASSISTANCE LANGUAGE</span>
+    </div>
+
+    <select id="languageSelect" class="language-select">
+
+        <option value="en-IN">
+            English
+        </option>
+
+        <option value="kn-IN">
+            ಕನ್ನಡ — Kannada
+        </option>
+
+        <option value="te-IN">
+            తెలుగు — Telugu
+        </option>
+
+        <option value="hi-IN">
+            हिन्दी — Hindi
+        </option>
+
+        <option value="ta-IN">
+            தமிழ் — Tamil
+        </option>
+
+    </select>
+
+</section>
+
+
+            <p class="voice-status" id="voiceStatus">
+    Hands-free mode
+</p>
+
+<p class="voice-hint" id="voiceHint">
+    Say “AURA” followed by what you need
+</p>
+
+
+        <!-- QUICK ACTIONS -->
+        <section class="quick-actions">
+
+            <button class="action-card" id="seeButton">
+
+                <span class="action-icon">◉</span>
+
+                <span>
+                    <strong>SEE</strong>
+                    <small>Understand surroundings</small>
+                </span>
+
+            </button>
+
+
+            <button class="action-card" id="goButton">
+
+                <span class="action-icon">⌖</span>
+
+                <span>
+                    <strong>GO</strong>
+                    <small>Navigate somewhere</small>
+                </span>
+
+            </button>
+
+        </section>
+
+
+        <!-- ASSISTANCE MESSAGE -->
+        <section class="assistant-tip">
+
+            <div class="tip-icon">✦</div>
+
+            <div>
+                <strong>Voice-first assistance</strong>
+
+                <p>
+                    You don't need to navigate menus.
+                    Just speak naturally.
+                </p>
+            </div>
+
+        </section>
+
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav" aria-label="Main navigation">
+
+            <button class="nav-item active">
+
+                <span>⌂</span>
+                <small>Home</small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>◉</span>
+                <small>See</small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>⌖</span>
+                <small>Go</small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>⚙</span>
+                <small>Settings</small>
+
+            </button>
+
+        </nav>
+        <!-- AURA SEE MODE -->
+<section class="see-screen" id="seeScreen">
+
+    <div class="see-header">
+        <div>
+            <span class="mode-label">AURA VISION</span>
+            <h2>See Mode</h2>
+        </div>
+
+        <div class="vision-status">
+            <span class="status-dot"></span>
+            VISION READY
+        </div>
+    </div>
+
+
+    <div class="vision-panel">
+
+        <div class="camera-placeholder">
+
+            <div class="camera-icon">
+                ◉
+            </div>
+
+            <h3>Vision Area</h3>
+
+            <p>
+                AURA will understand your surroundings here.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="vision-message">
+
+        <div class="voice-symbol">
+            ✦
+        </div>
+
+        <div>
+            <strong>AURA is listening</strong>
+
+            <p>
+                Say "describe my surroundings"
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="vision-actions">
+
+        <button class="vision-action">
+            <span>◉</span>
+            <strong>Describe</strong>
+            <small>What's around me?</small>
+        </button>
+
+        <button class="vision-action">
+            <span>⌁</span>
+            <strong>Path Check</strong>
+            <small>Is my path clear?</small>
+        </button>
+
+        <button class="vision-action">
+            <span>▤</span>
+            <strong>Read</strong>
+            <small>Read text around me</small>
+        </button>
+
+    </div>
+
+</section>
+
+    </main>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
