@@ -3,7 +3,7 @@
 ========================================== */
 
 function demoVisionResponse(question) {
-    const q = question.toLowerCase();
+    const q = String(question || "").toLowerCase();
     let answer = "";
 
     if (
@@ -13,9 +13,9 @@ function demoVisionResponse(question) {
         q.includes("surrounding")
     ) {
         answer =
-            "I can see the camera view. " +
-            "The surroundings may contain objects or furniture. " +
-            "Please move the camera slowly for a clearer view.";
+            "The AI vision service is currently unavailable, " +
+            "so I cannot reliably identify the objects in this image. " +
+            "Please try again when the vision service is connected.";
 
     } else if (
         q.includes("person") ||
@@ -23,16 +23,16 @@ function demoVisionResponse(question) {
         q.includes("someone")
     ) {
         answer =
-            "Please point the camera toward the person " +
-            "you want me to examine.";
+            "I cannot confirm whether a person is present " +
+            "because the vision service is unavailable.";
 
     } else if (
         q.includes("chair") ||
         q.includes("seat")
     ) {
         answer =
-            "Please point the camera toward the seating " +
-            "area you want me to examine.";
+            "I cannot reliably identify seating because " +
+            "the vision service is unavailable.";
 
     } else if (
         q.includes("path") ||
@@ -40,9 +40,9 @@ function demoVisionResponse(question) {
         q.includes("obstacle")
     ) {
         answer =
-            "I can help examine your surroundings, " +
-            "but I cannot guarantee that a path is safe. " +
-            "Continue using your established mobility aids.";
+            "I cannot verify whether your path is clear. " +
+            "Please use your established mobility aids " +
+            "and seek assistance when needed.";
 
     } else if (
         q.includes("read") ||
@@ -51,29 +51,196 @@ function demoVisionResponse(question) {
         q.includes("board")
     ) {
         answer =
-            "Please point the camera directly at the text " +
-            "and keep the camera steady.";
+            "The vision service is unavailable, so I cannot " +
+            "read the text in the camera image right now.";
 
     } else if (
         q.includes("color") ||
         q.includes("colour")
     ) {
         answer =
-            "Please point the camera toward the object " +
-            "whose color you want to identify.";
+            "I cannot reliably identify the color because " +
+            "the vision service is unavailable.";
 
     } else {
         answer =
-            "Tell me what you want me to examine, " +
-            "such as objects, people, signs, or text.";
+            "The camera may be working, but the AI vision service " +
+            "is unavailable. Please try again shortly.";
     }
 
-    updateStatus(
-        "SEE MODE",
-        "AURA is ready to assist."
-    );
+    if (typeof updateStatus === "function") {
+        updateStatus(
+            "VISION UNAVAILABLE",
+            "Check the AI backend connection."
+        );
+    }
 
-    speak(answer, true);
+    if (typeof speak === "function") {
+        speak(answer, false);
+    }
+
+    console.warn(
+        "AURA: Offline fallback used; no image analysis was performed."
+    );
+}
+
+
+/* ==========================================
+   AURA CAMERA HELPERS
+========================================== */
+
+async function ensureAuraCamera() {
+    const video = document.getElementById("cameraFeed");
+    const status = document.getElementById("cameraStatus");
+
+    if (!video) {
+        console.error(
+            "AURA: The video element #cameraFeed was not found."
+        );
+
+        if (status) {
+            status.textContent = "CAMERA ELEMENT NOT FOUND";
+        }
+
+        return false;
+    }
+
+    if (
+        !navigator.mediaDevices ||
+        typeof navigator.mediaDevices.getUserMedia !== "function"
+    ) {
+        console.error(
+            "AURA: Camera API unavailable. Check HTTPS and browser support."
+        );
+
+        if (status) {
+            status.textContent = "CAMERA API UNAVAILABLE";
+        }
+
+        return false;
+    }
+
+    // Reuse an existing active stream.
+    if (
+        video.srcObject &&
+        video.srcObject.getVideoTracks().some(
+            track => track.readyState === "live"
+        )
+    ) {
+        try {
+            await video.play();
+
+            if (status) {
+                status.textContent = "LIVE CAMERA";
+            }
+
+            if (typeof cameraIsOpen !== "undefined") {
+                cameraIsOpen = true;
+            }
+
+            return true;
+        } catch (error) {
+            console.error("AURA camera playback error:", error);
+        }
+    }
+
+    if (status) {
+        status.textContent = "REQUESTING CAMERA...";
+    }
+
+    try {
+        if (typeof startCamera !== "function") {
+            throw new Error(
+                "startCamera() is missing. Check app.js for syntax errors."
+            );
+        }
+
+        const result = await startCamera();
+
+        const stream = video.srcObject;
+
+        if (
+            result === false ||
+            !stream ||
+            !stream.getVideoTracks().some(
+                track => track.readyState === "live"
+            )
+        ) {
+            if (status && !status.textContent.includes("ERROR")) {
+                status.textContent = "CAMERA FAILED TO START";
+            }
+
+            return false;
+        }
+
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = true;
+
+        await video.play();
+
+        if (status) {
+            status.textContent = "LIVE CAMERA";
+        }
+
+        if (typeof cameraIsOpen !== "undefined") {
+            cameraIsOpen = true;
+        }
+
+        console.log("AURA: Camera is live.");
+
+        return true;
+
+    } catch (error) {
+        console.error(
+            "AURA CAMERA ERROR:",
+            error.name,
+            error.message
+        );
+
+        if (status) {
+            status.textContent =
+                (error.name || "CAMERA ERROR") +
+                ": " +
+                (error.message || "Unable to open camera");
+        }
+
+        return false;
+    }
+}
+
+
+/* ==========================================
+   AURA OFFLINE CAMERA CLEANUP
+========================================== */
+
+function stopAuraCamera() {
+    const video = document.getElementById("cameraFeed");
+
+    if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+
+    if (typeof cameraStream !== "undefined") {
+        cameraStream = null;
+    }
+
+    if (typeof cameraIsOpen !== "undefined") {
+        cameraIsOpen = false;
+    }
+
+    if (video) {
+        video.pause();
+    }
+
+    const status = document.getElementById("cameraStatus");
+
+    if (status) {
+        status.textContent = "CAMERA STOPPED";
+    }
+
+    console.log("AURA: Camera stopped.");
 }
 
 
@@ -85,78 +252,90 @@ const seeButton = document.getElementById("seeButton");
 const goButton = document.getElementById("goButton");
 const seeScreen = document.getElementById("seeScreen");
 
-/* SEE button is connected in index.html. */
 
 /* GO BUTTON */
+
 if (goButton) {
     goButton.addEventListener("click", function () {
-
         console.log("AURA: GO selected.");
 
-        updateStatus(
-            "GO MODE",
-            "Tell me where you want to go."
-        );
+        if (typeof updateStatus === "function") {
+            updateStatus(
+                "GO MODE",
+                "Tell me where you want to go."
+            );
+        }
 
-        speak(
-            "Go mode activated. Tell me where you want to go.",
-            true
-        );
+        if (typeof speak === "function") {
+            speak(
+                "Go mode activated. Tell me where you want to go.",
+                true
+            );
+        }
     });
 }
 
 
-/* SEE SCREEN ACTIONS */
-document.querySelectorAll(".vision-action").forEach(function(button) {
+/* ==========================================
+   SEE SCREEN ACTIONS
+========================================== */
 
-    button.addEventListener("click", async function() {
-
+document.querySelectorAll(".vision-action").forEach(function (button) {
+    button.addEventListener("click", async function () {
         const title =
-            this.querySelector("strong")?.textContent || "";
+            this.querySelector("strong")?.textContent?.trim() || "";
 
         console.log("AURA VISION ACTION:", title);
 
-        if (!cameraStream || !cameraIsOpen) {
-            const started = await startCamera();
+        const cameraReady = await ensureAuraCamera();
 
-            if (!started) {
-                return;
+        if (!cameraReady) {
+            if (typeof speak === "function") {
+                speak(
+                    "I could not open the camera. Please check camera permissions.",
+                    false
+                );
             }
+
+            return;
         }
 
+        let question = "";
+
         if (title === "Describe") {
-
-            await analyzeCamera(
-                "Describe the visible surroundings, objects, " +
-                "people, furniture, and environmental details."
-            );
-
+            question =
+                "Describe the visible surroundings, objects, people, " +
+                "furniture, and environmental details.";
         } else if (title === "Path Check") {
-
-            await analyzeCamera(
-                "Describe visible obstacles and features in the " +
-                "path. Do not assume that the path is safe."
-            );
-
+            question =
+                "Describe visible obstacles and features in the path. " +
+                "Do not assume that the path is safe.";
         } else if (title === "Read") {
+            question =
+                "Read visible text, signs, labels, or notices in the image.";
+        } else {
+            return;
+        }
 
-            await analyzeCamera(
-                "Read visible text, signs, labels, or notices " +
-                "in the camera image."
-            );
+        if (typeof analyzeCamera === "function") {
+            await analyzeCamera(question);
+        } else {
+            console.error("AURA: analyzeCamera() is missing.");
+            demoVisionResponse(question);
         }
     });
 });
 
 
-/* BOTTOM NAVIGATION */
+/* ==========================================
+   BOTTOM NAVIGATION
+========================================== */
+
 const navItems = document.querySelectorAll(".nav-item");
 
-navItems.forEach(function(item) {
-
-    item.addEventListener("click", async function() {
-
-        navItems.forEach(function(nav) {
+navItems.forEach(function (item) {
+    item.addEventListener("click", async function () {
+        navItems.forEach(function (nav) {
             nav.classList.remove("active");
         });
 
@@ -170,67 +349,98 @@ navItems.forEach(function(item) {
         console.log("AURA NAVIGATION:", label);
 
         if (label === "home") {
+            if (typeof updateStatus === "function") {
+                updateStatus(
+                    "AURA Ready",
+                    "Speak naturally. I'm listening."
+                );
+            }
 
-            updateStatus(
-                "AURA Ready",
-                "Speak naturally. I'm listening."
-            );
-
-            speak(
-                "Home. I'm ready to assist you.",
-                true
-            );
+            if (typeof speak === "function") {
+                speak("Home. I'm ready to assist you.", true);
+            }
 
             return;
         }
 
         if (label === "see") {
+            if (seeScreen) {
+                seeScreen.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
 
-            const started = await startCamera();
+            const cameraReady = await ensureAuraCamera();
 
-            if (!started) {
+            if (!cameraReady) {
                 return;
             }
 
-            updateStatus(
-                "SEE MODE",
-                "AURA is ready to examine your surroundings."
-            );
+            if (typeof updateStatus === "function") {
+                updateStatus(
+                    "SEE MODE",
+                    "AURA is ready to examine your surroundings."
+                );
+            }
 
-            speak(
-                "See mode activated. Ask me what you want me to see.",
-                true
-            );
+            if (typeof speak === "function") {
+                speak(
+                    "See mode activated. Ask me what you want me to see.",
+                    true
+                );
+            }
 
             return;
         }
 
         if (label === "go") {
+            if (typeof updateStatus === "function") {
+                updateStatus(
+                    "GO MODE",
+                    "Tell me where you want to go."
+                );
+            }
 
-            updateStatus(
-                "GO MODE",
-                "Tell me where you want to go."
-            );
-
-            speak(
-                "Go mode activated. Tell me where you want to go.",
-                true
-            );
+            if (typeof speak === "function") {
+                speak(
+                    "Go mode activated. Tell me where you want to go.",
+                    true
+                );
+            }
 
             return;
         }
 
         if (label === "settings") {
+            if (typeof updateStatus === "function") {
+                updateStatus(
+                    "SETTINGS",
+                    "AURA settings are ready."
+                );
+            }
 
-            updateStatus(
-                "SETTINGS",
-                "AURA settings are ready."
-            );
-
-            speak(
-                "Settings. Voice-first accessibility is active.",
-                false
-            );
+            if (typeof speak === "function") {
+                speak(
+                    "Settings. Voice-first accessibility is active.",
+                    false
+                );
+            }
         }
     });
 });
+
+
+/* ==========================================
+   STOP CAMERA BUTTON
+========================================== */
+
+const stopCameraButton =
+    document.getElementById("stopCameraButton");
+
+if (stopCameraButton) {
+    stopCameraButton.addEventListener(
+        "click",
+        stopAuraCamera
+    );
+}
